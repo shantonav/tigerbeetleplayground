@@ -1,5 +1,7 @@
 package com.drc.poc.drcdemo.service;
 
+import com.drc.poc.drcdemo.dtos.GroupDto;
+import com.drc.poc.drcdemo.dtos.GroupIndividualDto;
 import com.drc.poc.drcdemo.dtos.IndividualDto;
 import com.drc.poc.drcdemo.entities.Currency;
 import lombok.AllArgsConstructor;
@@ -23,8 +25,11 @@ public class ApplicationCommandReceptors {
         return "Created account number " + individualDto.getAccountNumber() + " for " + accountHolderName + " for Currency " + currency;
     }
 
-    @ShellMethod(key = "goodbye", value = "Say goodbye")
-    public String goodbye() {
-        return "Goodbye!";
+    @ShellMethod(key = "createAGroupAccount", value = "Create a Group account")
+    public String createAGroupAccount(@ShellOption(value = "--accountHolderName") String accountHolderName, @ShellOption(value = "--currency") Currency currency) {
+
+        GroupDto individualDto = accountService.createAGroupAccount(new GroupDto(Currency.EUR, accountHolderName));
+
+        return "Created group account number " + individualDto.getAccountNumber() + " for " + accountHolderName + " for Currency " + currency;
     }
 }

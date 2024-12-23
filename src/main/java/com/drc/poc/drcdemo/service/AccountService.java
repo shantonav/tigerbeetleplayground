@@ -17,16 +17,19 @@ public class AccountService implements AccountServiceInterface{
     private final GroupAccountRepo groupAccountRepo;
 
     @Override
-    public IndividualDto createAnAccount(IndividualDto individual) {
+    public IndividualDto createAnAccount(IndividualDto individualDto) {
         Long accountNumber = System.currentTimeMillis();
-        individualAccountRepo.save(accountMapper.fromAcountDto(individual).setIndivAccountNumber(accountNumber));
+        individualAccountRepo.save(accountMapper.fromAcountDto(individualDto).setIndivAccountNumber(accountNumber));
         // TODO : then call TigerBeetle Service to add this account to ledger
-        return (IndividualDto) individual.setAccountNumber(accountNumber);
+        return (IndividualDto) individualDto.setAccountNumber(accountNumber);
     }
 
     @Override
-    public GroupDto createAGroupAccount(GroupDto group) {
-        return null;
+    public GroupDto createAGroupAccount(GroupDto groupDto) {
+        Long accountNumber = System.currentTimeMillis();
+        groupAccountRepo.save(accountMapper.fromAcountDto(groupDto).setGroupAccountNumber(accountNumber));
+        // TODO : then call TigerBeetle Service to add this account to ledger
+        return (GroupDto) groupDto.setAccountNumber(accountNumber);
     }
 
     @Override
