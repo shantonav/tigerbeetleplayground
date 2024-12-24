@@ -105,6 +105,7 @@ public class LedgerStorageService {
         while (accountBatch.next()) {
             var lookupAccountResult = new LookupAccountResult(
                     UInt128.asLong(accountBatch.getId(), UInt128.LeastSignificant),
+                    accountBatch.getCreditsPosted().subtract(accountBatch.getDebitsPosted()),
                     accountBatch.getDebitsPending(),
                     accountBatch.getDebitsPosted(),
                     accountBatch.getCreditsPending(),

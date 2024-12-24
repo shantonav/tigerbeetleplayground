@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.time.OffsetDateTime;
 
 public record LookupAccountResult(Long accountId,
+                                  BigInteger currentBalance,
                                   BigInteger debitsPending,
                                   BigInteger debitsPosted,
                                   BigInteger creditsPending,
