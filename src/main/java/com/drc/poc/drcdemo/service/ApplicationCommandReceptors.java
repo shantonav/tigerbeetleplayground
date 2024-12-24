@@ -9,6 +9,7 @@ import com.drc.poc.drcdemo.tbstorage.service.LedgerStorageService;
 import com.drc.poc.drcdemo.tbstorage.service.model.BatchDepositRequest;
 import com.drc.poc.drcdemo.tbstorage.service.model.BatchWithdrawRequest;
 import com.drc.poc.drcdemo.tbstorage.service.model.DepositRequest;
+import com.drc.poc.drcdemo.tbstorage.service.model.TransferRequest;
 import com.drc.poc.drcdemo.tbstorage.service.model.TransferResult;
 import com.drc.poc.drcdemo.tbstorage.service.model.WithdrawRequest;
 import lombok.AllArgsConstructor;
@@ -81,7 +82,7 @@ public class ApplicationCommandReceptors {
         BatchDepositRequest batchDepositRequest = new BatchDepositRequest(DEFAULT_BANK_ACCOUNT_ID, Collections.singletonList(depositRequest));
         TransferResult depositResult = ledgerStorageService.deposit(batchDepositRequest).get(0);
         if (depositResult.response() != 0) {
-            log.error("Deposit failed for {} _ {} due to: {}", accountHolderName, accountNumber, depositResult.description());
+            log.error("Deposit failed for {}-{} due to: {}", accountHolderName, accountNumber, depositResult.description());
             throw new RuntimeException("Deposit failed");
         }
 
@@ -91,8 +92,8 @@ public class ApplicationCommandReceptors {
 
     @ShellMethod(key = "withDrawFromAccount", value = "Withdraw money from an account")
     public String withDrawFromAccount(@ShellOption(value = "--amount") Long amount,
-                                   @ShellOption(value = "--accountName", defaultValue = "") String accountHolderName,
-                                   @ShellOption(value = "--accountNumber", defaultValue = "" ) String accountNumber) {
+                                      @ShellOption(value = "--accountName", defaultValue = "") String accountHolderName,
+                                      @ShellOption(value = "--accountNumber", defaultValue = "" ) String accountNumber) {
 
         Optional<AccountDetails> accountDetails =
                 accountService.checkIfAccountExists(new AccountOperationDto(amount, accountHolderName, convertAccountNumber.apply(accountNumber)));
@@ -105,7 +106,7 @@ public class ApplicationCommandReceptors {
         BatchWithdrawRequest batchWithdrawRequest = new BatchWithdrawRequest(DEFAULT_BANK_ACCOUNT_ID, Collections.singletonList(withdrawRequest));
         TransferResult withdrawResult = ledgerStorageService.withdraw(batchWithdrawRequest).get(0);
         if (withdrawResult.response() != 0) {
-            log.error("Deposit failed for {} _ {} due to: {}", accountHolderName, accountNumber, withdrawResult.description());
+            log.error("Deposit failed for {}-{} due to: {}", accountHolderName, accountNumber, withdrawResult.description());
             throw new RuntimeException("Deposit failed");
         }
 
@@ -141,8 +142,14 @@ public class ApplicationCommandReceptors {
             return "";
         };
 
+        TransferRequest transferRequest = new TransferRequest(Long.parseLong(fromAccountNumber), Long.parseLong(toAccountNumber), BigInteger.valueOf(amount));
+        TransferResult transfersResult = ledgerStorageService.createTransfers(Collections.singletonList(transferRequest)).get(0);
 
-        // TODO: call TB client to deposit funds to target account
+        if (transfersResult.response() != 0) {
+            log.error("Transfer failed from {}-{} to  {}-{}, caused by: {}", fromAccountName, fromAccountNumber, toAccountName, toAccountNumber, transfersResult.description());
+            throw new RuntimeException("Deposit failed");
+        }
+
         return String.format("Money %s is transferred from account name %s or number %s, " +
                 "to account name %s or number %s", amount, fromAccountName, fromAccountNumber, toAccountName, toAccountNumber);
     }
