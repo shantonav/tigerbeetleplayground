@@ -1,10 +1,8 @@
 package com.drc.poc.drcdemo.service;
 
-import com.drc.poc.drcdemo.dtos.GroupDto;
-import com.drc.poc.drcdemo.dtos.GroupIndividualDto;
-import com.drc.poc.drcdemo.dtos.IndividualDto;
+import com.drc.poc.drcdemo.dtos.*;
 
-import java.util.concurrent.ExecutionException;
+import java.util.Optional;
 
 public interface AccountServiceInterface {
     public IndividualDto createAnAccount(IndividualDto individual);
@@ -12,4 +10,8 @@ public interface AccountServiceInterface {
     public GroupDto createAGroupAccount(GroupDto group);
 
     public boolean addIndividualToAGroup(GroupIndividualDto groupIndividual);
+
+    public Optional<AccountDetails> checkIfAccountExists(AccountOperationDto accountOperationDto);
+
+    public TransferResult transferFunds(TransferDto transferDto);
 }
