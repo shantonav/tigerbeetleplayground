@@ -45,11 +45,11 @@ public class LedgerStorageService {
     }
 
     public List<AccountCreated> createBankAccounts(List<Long> accountIds) {
-        return createAccounts(accountIds, AccountFlags.HISTORY);
+        return createAccounts(accountIds, AccountFlags.NONE);
     }
 
     public List<AccountCreated> createAccounts(List<Long> accountIds) {
-        return createAccounts(accountIds, AccountFlags.CREDITS_MUST_NOT_EXCEED_DEBITS);
+        return createAccounts(accountIds, AccountFlags.DEBITS_MUST_NOT_EXCEED_CREDITS);
     }
 
     private List<AccountCreated> createAccounts(List<Long> accountIds, int flags) {

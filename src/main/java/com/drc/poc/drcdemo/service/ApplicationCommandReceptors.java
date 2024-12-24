@@ -5,6 +5,12 @@ import com.drc.poc.drcdemo.dtos.GroupDto;
 import com.drc.poc.drcdemo.dtos.GroupIndividualDto;
 import com.drc.poc.drcdemo.dtos.IndividualDto;
 import com.drc.poc.drcdemo.entities.Currency;
+import com.drc.poc.drcdemo.tbstorage.service.LedgerStorageService;
+import com.drc.poc.drcdemo.tbstorage.service.model.BatchDepositRequest;
+import com.drc.poc.drcdemo.tbstorage.service.model.BatchWithdrawRequest;
+import com.drc.poc.drcdemo.tbstorage.service.model.DepositRequest;
+import com.drc.poc.drcdemo.tbstorage.service.model.TransferResult;
+import com.drc.poc.drcdemo.tbstorage.service.model.WithdrawRequest;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.shell.standard.ShellComponent;
@@ -12,14 +18,19 @@ import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
 import org.springframework.util.ObjectUtils;
 
+import java.math.BigInteger;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.function.Function;
+
+import static com.drc.poc.drcdemo.tbstorage.config.DemoBankAccounts.DEFAULT_BANK_ACCOUNT_ID;
 
 @ShellComponent
 @Slf4j
 @AllArgsConstructor
 public class ApplicationCommandReceptors {
     private final AccountServiceInterface accountService;
+    private final LedgerStorageService ledgerStorageService;
 
 
     @ShellMethod(key = "createAccount", value = "Create an individual account")
@@ -65,8 +76,16 @@ public class ApplicationCommandReceptors {
             log.error("Account name {} and/or number {} does not exist. Deposit aborted ", accountHolderName, accountNumber);
             return "";
         };
-        // TODO: call TB client to deposit funds to target account
-       return String.format("Money %s deposited to account name %s or number %s", amount, accountHolderName, accountNumber);
+
+        DepositRequest depositRequest = new DepositRequest(Long.parseLong(accountNumber), BigInteger.valueOf(amount));
+        BatchDepositRequest batchDepositRequest = new BatchDepositRequest(DEFAULT_BANK_ACCOUNT_ID, Collections.singletonList(depositRequest));
+        TransferResult depositResult = ledgerStorageService.deposit(batchDepositRequest).get(0);
+        if (depositResult.response() != 0) {
+            log.error("Deposit failed for {} _ {} due to: {}", accountHolderName, accountNumber, depositResult.description());
+            throw new RuntimeException("Deposit failed");
+        }
+
+        return String.format("Money %s deposited to account name %s or number %s", amount, accountHolderName, accountNumber);
     }
 
 
@@ -81,7 +100,15 @@ public class ApplicationCommandReceptors {
             log.error("Account name {} and/or number {} does not exist. Withdrawal aborted ", accountHolderName, accountNumber);
             return "";
         };
-        // TODO: call TB client to deposit funds to target account
+
+        WithdrawRequest withdrawRequest = new WithdrawRequest(Long.parseLong(accountNumber), BigInteger.valueOf(amount));
+        BatchWithdrawRequest batchWithdrawRequest = new BatchWithdrawRequest(DEFAULT_BANK_ACCOUNT_ID, Collections.singletonList(withdrawRequest));
+        TransferResult withdrawResult = ledgerStorageService.withdraw(batchWithdrawRequest).get(0);
+        if (withdrawResult.response() != 0) {
+            log.error("Deposit failed for {} _ {} due to: {}", accountHolderName, accountNumber, withdrawResult.description());
+            throw new RuntimeException("Deposit failed");
+        }
+
         return String.format("Money %s withdrawn from account name %s or number %s", amount, accountHolderName, accountNumber);
     }
 
