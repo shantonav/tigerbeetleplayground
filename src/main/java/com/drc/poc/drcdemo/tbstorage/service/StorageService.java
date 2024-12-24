@@ -136,10 +136,6 @@ public class StorageService {
                .toList();
     }
 
-    public void lookupAccountBalances(List<Long> accountIds) {
-
-    }
-
     public List<TransferResult> createTransfers(List<TransferRequest> transferRequests)  {
         if(transferRequests.isEmpty()) {
             return emptyList();
@@ -235,7 +231,7 @@ public class StorageService {
         return result;
     }
 
-    private static AccountFilter getAccountFilter(Long accountId) {
+    private AccountFilter getAccountFilter(Long accountId) {
         var accountFilter = new AccountFilter();
         accountFilter.setAccountId(accountId);
 
