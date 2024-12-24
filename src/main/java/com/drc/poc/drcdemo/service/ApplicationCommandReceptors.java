@@ -26,10 +26,19 @@ public class ApplicationCommandReceptors {
     }
 
     @ShellMethod(key = "createAGroupAccount", value = "Create a Group account")
-    public String createAGroupAccount(@ShellOption(value = "--accountHolderName") String accountHolderName, @ShellOption(value = "--currency") Currency currency) {
+    public String createAGroupAccount(@ShellOption(value = "--groupName") String groupName, @ShellOption(value = "--currency") Currency currency) {
 
-        GroupDto individualDto = accountService.createAGroupAccount(new GroupDto(Currency.EUR, accountHolderName));
+        GroupDto individualDto = accountService.createAGroupAccount(new GroupDto(Currency.EUR, groupName));
 
-        return "Created group account number " + individualDto.getAccountNumber() + " for " + accountHolderName + " for Currency " + currency;
+        return "Created group account number " + individualDto.getAccountNumber() + " for " + groupName + " for Currency " + currency;
+    }
+
+    @ShellMethod(key = "addAccountToGroup", value = "Create a Group account")
+    public String addAccountToGroup(@ShellOption(value = "--accountHolderName") String accountHolderName,
+                                    @ShellOption(value = "--groupName") String groupName) {
+
+        Boolean individualAdded = accountService.addIndividualToAGroup(new GroupIndividualDto(groupName, accountHolderName));
+
+        return "Individual " + accountHolderName+ " added to group " + groupName + " successfully ? "+ individualAdded;
     }
 }

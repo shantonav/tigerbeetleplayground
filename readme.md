@@ -60,3 +60,12 @@ Restrictions:
 
 
 
+##things to do 
+
+1. Unique constraints : not working with in-mem H2, changed to im-mem cache for idempotency
+2. Batching 
+3. Integrate TB
+4. Display the ledger with a command
+5. Deposit : money goes to L1 (liquidity) -> transfer from L1 to A1 
+6. Withdraw : transfer from A2 to L1
+7. Transfer

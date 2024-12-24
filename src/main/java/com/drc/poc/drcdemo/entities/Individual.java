@@ -21,7 +21,7 @@ public class Individual {
     @Column(name = "INDIVIDUALNAME", nullable = false)
     private String individualName;
 
-    @Column(name = "INDIVACCOUNTNUMBER")
+    @Column(name = "INDIVACCOUNTNUMBER", nullable = false)
     private Long indivAccountNumber;
 
     @Column(name = "BALANCE")

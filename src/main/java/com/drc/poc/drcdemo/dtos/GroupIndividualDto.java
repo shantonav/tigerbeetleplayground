@@ -1,5 +1,6 @@
 package com.drc.poc.drcdemo.dtos;
 
+import com.drc.poc.drcdemo.entities.Currency;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -16,4 +17,9 @@ public class GroupIndividualDto extends AccountDto{
     private String groupName;
     @NotNull
     private String individualName;
+
+    public GroupIndividualDto( String groupName, String individualName) {
+        this.groupName = groupName;
+        this.individualName = individualName;
+    }
 }

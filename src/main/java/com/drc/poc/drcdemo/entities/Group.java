@@ -21,7 +21,7 @@ public class Group {
     @Column(name = "GROUPNAME", nullable = false)
     private String groupName;
 
-    @Column(name = "GROUPACCOUNTNUMBER")
+    @Column(name = "GROUPACCOUNTNUMBER", nullable = false)
     private Long groupAccountNumber;
 
 

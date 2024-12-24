@@ -18,13 +18,13 @@ public class GroupIndividual {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.RESTRICT)
     @JoinColumn(name = "GROUPID", nullable = false)
-    private com.drc.poc.drcdemo.entities.Group groupid;
+    private com.drc.poc.drcdemo.entities.Group group;
 
     @MapsId("individualid")
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.RESTRICT)
     @JoinColumn(name = "INDIVIDUALID", nullable = false)
-    private com.drc.poc.drcdemo.entities.Individual individualid;
+    private com.drc.poc.drcdemo.entities.Individual individual;
 
 
 }
