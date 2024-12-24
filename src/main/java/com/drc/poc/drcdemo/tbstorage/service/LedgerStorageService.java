@@ -37,10 +37,10 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
 @Service
-public class StorageService {
+public class LedgerStorageService {
     private final Client tigerBeetleClient;
 
-    public StorageService(Client tigerBeetleClient) {
+    public LedgerStorageService(Client tigerBeetleClient) {
         this.tigerBeetleClient = tigerBeetleClient;
     }
 

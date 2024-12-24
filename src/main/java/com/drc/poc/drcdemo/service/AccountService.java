@@ -1,19 +1,28 @@
 package com.drc.poc.drcdemo.service;
 
 
-import com.drc.poc.drcdemo.dtos.*;
+import com.drc.poc.drcdemo.dtos.AccountOperationDto;
+import com.drc.poc.drcdemo.dtos.GroupDto;
+import com.drc.poc.drcdemo.dtos.GroupIndividualDto;
+import com.drc.poc.drcdemo.dtos.IndividualDto;
+import com.drc.poc.drcdemo.dtos.TransferDto;
+import com.drc.poc.drcdemo.dtos.TransferResult;
 import com.drc.poc.drcdemo.entities.Group;
 import com.drc.poc.drcdemo.entities.GroupIndividual;
 import com.drc.poc.drcdemo.entities.Individual;
 import com.drc.poc.drcdemo.repository.GroupAccountRepo;
 import com.drc.poc.drcdemo.repository.GroupIndividualRepo;
 import com.drc.poc.drcdemo.repository.IndividualAccountRepo;
+import com.drc.poc.drcdemo.tbstorage.service.LedgerStorageService;
+import com.drc.poc.drcdemo.tbstorage.service.model.AccountCreated;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -30,6 +39,7 @@ public class AccountService implements AccountServiceInterface{
     private final AccountMapper accountMapper;
     private final GroupAccountRepo groupAccountRepo;
     private final GroupIndividualRepo groupIndividualRepo;
+    private final LedgerStorageService ledgerStorageService;
     private final Map<String, AccountDetails> map = new HashMap<>();
     private final BiFunction<Tupple, AccountType, AccountDetails> store =
             (tupple, accountType) -> map.put(tupple.accountName(), new AccountDetails(tupple.accountNumber(), accountType)) ;
@@ -54,8 +64,25 @@ public class AccountService implements AccountServiceInterface{
             throw new RuntimeException(e.getMessage());
         }
 
-        // TODO : then call TigerBeetle Service to add this account to ledger
+        boolean createAccountInLedgerSuccess = addAccountToStorage(indiv.getIndivAccountNumber());
+        if (!createAccountInLedgerSuccess) {
+            handleLedgerServiceError(indiv.getIndivAccountNumber());
+        }
+
         return (IndividualDto) individualDto.setAccountNumber(indiv.getIndivAccountNumber());
+    }
+
+    private boolean addAccountToStorage(Long accountNumber) {
+        List<AccountCreated> accounts = ledgerStorageService.createAccounts(Collections.singletonList(accountNumber));
+        return accounts.stream()
+                .anyMatch(accountCreated ->
+                        Objects.equals(accountCreated.accountNumber(), accountNumber) && accountCreated.statusCode() == 0);
+    }
+
+    private void handleLedgerServiceError(long accountNumber) {
+        log.error("ERROR! while creating an account in Ledger Storage: {}", accountNumber);
+        // todo: after demo is successfull, implement more things to do here.
+        throw new RuntimeException("ERROR! while creating an account in Ledger Storage:");
     }
 
     @Override
@@ -75,7 +102,12 @@ public class AccountService implements AccountServiceInterface{
             log.error("ERROR! while creating a group: {}", e.getMessage());
             throw new RuntimeException(e.getMessage());
         }
-        // TODO : then call TigerBeetle Service to add this account to ledger
+
+        boolean createAccountInLedgerSuccess = addAccountToStorage(group.getGroupAccountNumber());
+        if (!createAccountInLedgerSuccess) {
+            handleLedgerServiceError(group.getGroupAccountNumber());
+        }
+
         return (GroupDto) groupDto.setAccountNumber(group.getGroupAccountNumber());
     }
 

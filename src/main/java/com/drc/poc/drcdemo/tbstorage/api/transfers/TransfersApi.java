@@ -1,7 +1,7 @@
 package com.drc.poc.drcdemo.tbstorage.api.transfers;
 
 
-import com.drc.poc.drcdemo.tbstorage.service.StorageService;
+import com.drc.poc.drcdemo.tbstorage.service.LedgerStorageService;
 import com.drc.poc.drcdemo.tbstorage.service.model.BatchDepositRequest;
 import com.drc.poc.drcdemo.tbstorage.service.model.BatchWithdrawRequest;
 import com.drc.poc.drcdemo.tbstorage.service.model.TransferOverview;
@@ -18,29 +18,29 @@ import java.util.List;
 @RestController
 @RequestMapping("/transfers")
 public class TransfersApi {
-    private final StorageService storageService;
+    private final LedgerStorageService ledgerStorageService;
 
-    public TransfersApi(StorageService storageService) {
-        this.storageService = storageService;
+    public TransfersApi(LedgerStorageService ledgerStorageService) {
+        this.ledgerStorageService = ledgerStorageService;
     }
 
     @PostMapping
     List<TransferResult> transfer(@RequestBody List<TransferRequest> transferRequests) {
-        return storageService.createTransfers(transferRequests);
+        return ledgerStorageService.createTransfers(transferRequests);
     }
 
     @PostMapping("/deposit")
     List<TransferResult> deposit(@RequestBody BatchDepositRequest batchDepositRequest) {
-        return storageService.deposit(batchDepositRequest);
+        return ledgerStorageService.deposit(batchDepositRequest);
     }
 
     @PostMapping("/withdraw")
     List<TransferResult> withdraw(@RequestBody BatchWithdrawRequest batchWithdrawRequest) {
-        return storageService.withdraw(batchWithdrawRequest);
+        return ledgerStorageService.withdraw(batchWithdrawRequest);
     }
 
     @GetMapping("/overview")
     List<TransferOverview> getTransferOverview(@RequestBody List<Long> accountIds) {
-        return storageService.lookupTransfers(accountIds);
+        return ledgerStorageService.lookupTransfers(accountIds);
     }
 }

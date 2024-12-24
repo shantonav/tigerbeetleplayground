@@ -1,7 +1,7 @@
 package com.drc.poc.drcdemo.tbstorage.api.account;
 
 
-import com.drc.poc.drcdemo.tbstorage.service.StorageService;
+import com.drc.poc.drcdemo.tbstorage.service.LedgerStorageService;
 import com.drc.poc.drcdemo.tbstorage.service.model.AccountCreated;
 import com.drc.poc.drcdemo.tbstorage.service.model.AccountOverview;
 import com.drc.poc.drcdemo.tbstorage.service.model.LookupAccountResult;
@@ -16,30 +16,30 @@ import java.util.List;
 @RestController
 @RequestMapping("/accounts")
 public class AccountsApi {
-    private final StorageService storageService;
+    private final LedgerStorageService ledgerStorageService;
 
-    public AccountsApi(StorageService storageService) {
-        this.storageService = storageService;
+    public AccountsApi(LedgerStorageService ledgerStorageService) {
+        this.ledgerStorageService = ledgerStorageService;
     }
 
-    @PostMapping
+    @PostMapping("/bank/create")
     List<AccountCreated> createBankAccounts(@RequestBody List<Long> accountIds) {
-        return storageService.createBankAccounts(accountIds);
+        return ledgerStorageService.createBankAccounts(accountIds);
     }
 
     @PostMapping
     List<AccountCreated> createAccountResults(@RequestBody List<Long> accountIds) {
-        return storageService.createAccounts(accountIds);
+        return ledgerStorageService.createAccounts(accountIds);
     }
 
     @GetMapping
     List<LookupAccountResult> getAccountResults(@RequestBody List<Long> accountIds) {
-        return storageService.lookupAccount(accountIds);
+        return ledgerStorageService.lookupAccount(accountIds);
     }
 
     @GetMapping("/overview")
     List<AccountOverview> getAccountsOverview(@RequestBody List<Long> accountIds) {
-        return storageService.lookupAccountOverview(accountIds);
+        return ledgerStorageService.lookupAccountOverview(accountIds);
     }
 
 }
