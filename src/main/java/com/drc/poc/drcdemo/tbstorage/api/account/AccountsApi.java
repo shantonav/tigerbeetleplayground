@@ -34,12 +34,12 @@ public class AccountsApi {
 
     @GetMapping
     List<LookupAccountResult> getAccountResults(@RequestBody List<Long> accountIds) {
-        return ledgerStorageService.lookupAccount(accountIds);
+        return ledgerStorageService.lookupAccounts(accountIds);
     }
 
     @GetMapping("/overview")
     List<AccountOverview> getAccountsOverview(@RequestBody List<Long> accountIds) {
-        return ledgerStorageService.lookupAccountOverview(accountIds);
+        return ledgerStorageService.lookupAccountsOverview(accountIds);
     }
 
 }

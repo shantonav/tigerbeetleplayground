@@ -1,6 +1,7 @@
 package com.drc.poc.drcdemo.service;
 
 
+import com.drc.poc.drcdemo.dtos.AccountBalance;
 import com.drc.poc.drcdemo.dtos.AccountOperationDto;
 import com.drc.poc.drcdemo.dtos.GroupDto;
 import com.drc.poc.drcdemo.dtos.GroupIndividualDto;
@@ -15,6 +16,7 @@ import com.drc.poc.drcdemo.repository.GroupIndividualRepo;
 import com.drc.poc.drcdemo.repository.IndividualAccountRepo;
 import com.drc.poc.drcdemo.tbstorage.service.LedgerStorageService;
 import com.drc.poc.drcdemo.tbstorage.service.model.AccountCreated;
+import com.drc.poc.drcdemo.tbstorage.service.model.LookupAccountResult;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -30,6 +32,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 @Component
 @AllArgsConstructor
@@ -155,6 +158,38 @@ public class AccountService implements AccountServiceInterface{
     @Override
     public TransferResult transferFunds(TransferDto transferDto) {
         return null;
+    }
+
+    public List<AccountBalance> getBalanceForAllAccounts() {
+        HashMap<Long, String> accountIdNameMap = new HashMap<>();
+        List<Long> individualAccountIds = individualAccountRepo
+                .findAll()
+                .stream()
+                .map(individual -> {
+                    accountIdNameMap.put(individual.getIndivAccountNumber(), individual.getIndividualName());
+                    return individual.getIndivAccountNumber();
+                })
+                .toList();
+
+        List<Long> groupAccountIds = groupAccountRepo
+                .findAll()
+                .stream()
+                .map(group -> {
+                    accountIdNameMap.put(group.getGroupAccountNumber(), group.getGroupName());
+                    return group.getGroupAccountNumber();
+                })
+                .toList();
+
+        List<Long> allAccountIds = Stream.concat(individualAccountIds.stream(), groupAccountIds.stream()).toList();
+
+        List<LookupAccountResult> lookupAccountResults = ledgerStorageService.lookupAccounts(allAccountIds);
+
+        return lookupAccountResults
+                .stream()
+                .map(lookupAccountResult -> {
+                    String accountName = accountIdNameMap.get(lookupAccountResult.accountId());
+                    return new AccountBalance(accountName, lookupAccountResult.accountId(), lookupAccountResult.currentBalance());
+                }).toList();
     }
 
 }

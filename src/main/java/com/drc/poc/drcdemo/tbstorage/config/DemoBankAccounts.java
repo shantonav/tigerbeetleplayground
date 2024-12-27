@@ -23,7 +23,7 @@ public class DemoBankAccounts  implements ApplicationListener<ContextRefreshedEv
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
-        List<LookupAccountResult> lookupAccountResults = ledgerStorageService.lookupAccount(Collections.singletonList(DEFAULT_BANK_ACCOUNT_ID));
+        List<LookupAccountResult> lookupAccountResults = ledgerStorageService.lookupAccounts(Collections.singletonList(DEFAULT_BANK_ACCOUNT_ID));
         if (lookupAccountResults.isEmpty()) {
 
             List<AccountCreated> bankAccounts = ledgerStorageService.createBankAccounts(Collections.singletonList(DEFAULT_BANK_ACCOUNT_ID));

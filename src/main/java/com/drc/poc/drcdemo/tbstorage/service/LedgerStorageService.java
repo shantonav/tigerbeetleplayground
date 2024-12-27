@@ -90,7 +90,7 @@ public class LedgerStorageService {
 
     }
 
-    public List<LookupAccountResult> lookupAccount(List<Long> accountIds) {
+    public List<LookupAccountResult> lookupAccounts(List<Long> accountIds) {
         if (accountIds.isEmpty()) {
             return emptyList();
         }
@@ -122,12 +122,12 @@ public class LedgerStorageService {
 
     }
 
-    public List<AccountOverview> lookupAccountOverview(List<Long> accountIds) {
+    public List<AccountOverview> lookupAccountsOverview(List<Long> accountIds) {
         if (accountIds.isEmpty()) {
             return emptyList();
         }
 
-        List<LookupAccountResult> lookupAccountResults = lookupAccount(accountIds);
+        List<LookupAccountResult> lookupAccountResults = lookupAccounts(accountIds);
 
         return lookupAccountResults.stream()
                .map(lookupAccountResult -> {

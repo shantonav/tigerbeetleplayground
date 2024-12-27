@@ -1,5 +1,6 @@
 package com.drc.poc.drcdemo.service;
 
+import com.drc.poc.drcdemo.dtos.AccountBalance;
 import com.drc.poc.drcdemo.dtos.AccountOperationDto;
 import com.drc.poc.drcdemo.dtos.GroupDto;
 import com.drc.poc.drcdemo.dtos.GroupIndividualDto;
@@ -21,8 +22,10 @@ import org.springframework.util.ObjectUtils;
 
 import java.math.BigInteger;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static com.drc.poc.drcdemo.tbstorage.config.DemoBankAccounts.DEFAULT_BANK_ACCOUNT_ID;
 
@@ -40,6 +43,18 @@ public class ApplicationCommandReceptors {
         IndividualDto individualDto = accountService.createAnAccount(new IndividualDto(Currency.EUR, accountHolderName));
 
         return "Created account number " + individualDto.getAccountNumber() + " for " + accountHolderName + " for Currency " + currency;
+    }
+
+    @ShellMethod(key = "lookupAllAccounts", value = "Lookup all accounts")
+    public String lookupAllAccounts() {
+
+        List<AccountBalance> balanceForAllAccounts = accountService.getBalanceForAllAccounts();
+
+        String printOutResponse = balanceForAllAccounts.stream()
+                .map(accountBalance -> String.format("Account name: %s, accountNumber: %d, balance: %d", accountBalance.accountName(), accountBalance.accountId(), accountBalance.balance()))
+                .collect(Collectors.joining("\n"));
+
+        return "Account balances: \n" + printOutResponse;
     }
 
     @ShellMethod(key = "createAGroupAccount", value = "Create a Group account")
