@@ -16,4 +16,8 @@ public abstract  class AccountDto {
     public AccountDto(Currency currency) {
         this.currency = currency;
     }
+    public AccountDto(Currency currency, Long accountNumber) {
+        this.currency = currency;
+        this.accountNumber = accountNumber;
+    }
 }

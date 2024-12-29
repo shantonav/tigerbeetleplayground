@@ -12,4 +12,6 @@ public interface GroupAccountRepo extends JpaRepository<Group, Integer> {
     Optional<Group> findByGroupName(String groupName);
 
     Optional<Group> findByGroupAccountNumber(Integer groupAccountNumber);
+
+    Optional<Group> findByGroupAccountNumberOrGroupName(Long groupAccountNumber, String groupName);
 }

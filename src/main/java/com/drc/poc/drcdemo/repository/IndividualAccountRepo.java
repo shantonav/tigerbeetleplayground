@@ -11,5 +11,7 @@ public interface IndividualAccountRepo extends JpaRepository<Individual, Integer
     
     Optional<Individual> findByIndividualName(String individualName);
 
+    Optional<Individual> findByIndivAccountNumberOrIndividualName(Long indivAccountNumber, String individualName);
+
     Optional<Individual> findByIndivAccountNumber(Integer indivAccountNumber);
 }

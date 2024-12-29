@@ -17,4 +17,8 @@ public interface AccountServiceInterface {
     TransferResult transferFunds(TransferDto transferDto);
 
     List<AccountBalance> getBalanceForAllAccounts();
+
+    Optional<IndividualDto> findIndividual(String accountName, Long accountNumber);
+
+    Optional<GroupDto> findGroup(String accountName, Long accountNumber);
 }

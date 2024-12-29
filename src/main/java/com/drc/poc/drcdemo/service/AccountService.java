@@ -30,6 +30,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -190,6 +191,29 @@ public class AccountService implements AccountServiceInterface{
                     String accountName = accountIdNameMap.get(lookupAccountResult.accountId());
                     return new AccountBalance(accountName, lookupAccountResult.accountId(), lookupAccountResult.currentBalance());
                 }).toList();
+    }
+
+    @Override
+    public Optional<IndividualDto> findIndividual(String accountName, Long accountNumber) {
+        AtomicReference<Optional<IndividualDto>> individualDto = new AtomicReference<>(Optional.empty());
+                individualAccountRepo.findByIndivAccountNumberOrIndividualName(accountNumber, accountName)
+                        .ifPresent(individual -> {
+                            individualDto.set(Optional.of(new IndividualDto(individual.getCurrency(), individual.getIndivAccountNumber(),
+                                    individual.getIndividualName(), accountMapper.fromGroups(individual.getGroups()))));
+                        });
+
+        return individualDto.get();
+    }
+
+    @Override
+    public Optional<GroupDto> findGroup(String accountName, Long accountNumber) {
+        AtomicReference<Optional<GroupDto>> groupDto = new AtomicReference<>(Optional.empty());
+        groupAccountRepo.findByGroupAccountNumberOrGroupName(accountNumber, accountName)
+                .ifPresent(grp -> {
+                    groupDto.set(Optional.of(new GroupDto(grp.getCurrency(), grp.getGroupName(), grp.getGroupAccountNumber())));
+                });
+
+        return groupDto.get();
     }
 
 }

@@ -8,6 +8,9 @@ import com.drc.poc.drcdemo.entities.Individual;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+import java.util.List;
+import java.util.Set;
+
 @Mapper(componentModel = "spring")
 public interface AccountMapper {
 
@@ -22,6 +25,11 @@ public interface AccountMapper {
 
     @Mapping(target = "accountNumber", source = "accountNumber")
     GroupDto fromGroupDto(GroupDto groupDto, Long accountNumber);
+
+    Set<GroupDto> fromGroups(Set<Group> groups);
+
+    @Mapping(target = "accountNumber", source = "group.groupAccountNumber")
+    GroupDto fromGroup(Group group);
 
 
     @Mapping(target = "id.groupid" , source = "group.id")

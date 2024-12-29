@@ -31,7 +31,7 @@ public class Group {
     @Column(name = "CURRENCY", nullable = false)
     private Currency currency;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     private Set<com.drc.poc.drcdemo.entities.Individual> individuals = new LinkedHashSet<>();
 
 }

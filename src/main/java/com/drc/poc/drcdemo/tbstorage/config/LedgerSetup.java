@@ -13,11 +13,11 @@ import java.util.List;
 
 @Slf4j
 @Component
-public class DemoBankAccounts  implements ApplicationListener<ContextRefreshedEvent> {
+public class LedgerSetup implements ApplicationListener<ContextRefreshedEvent> {
     public static Long DEFAULT_BANK_ACCOUNT_ID = 1L;
     private final LedgerStorageService ledgerStorageService;
 
-    public DemoBankAccounts(LedgerStorageService ledgerStorageService) {
+    public LedgerSetup(LedgerStorageService ledgerStorageService) {
         this.ledgerStorageService = ledgerStorageService;
     }
 

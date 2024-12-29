@@ -30,7 +30,11 @@ public class Individual {
     @Column(name = "CURRENCY", nullable = false)
     private Currency currency;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "GROUP_INDIVIDUAL",
+            joinColumns = @JoinColumn(name = "INDIVIDUALID"),
+            inverseJoinColumns = @JoinColumn(name = "groupid"))
     private Set<Group> groups = new LinkedHashSet<>();
 
 

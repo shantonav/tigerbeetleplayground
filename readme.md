@@ -56,16 +56,39 @@ Restrictions:
 
 
 
+## For example a run of the following commands (on a fresh app start)
+
+```shell
+createAccount --accountHolderName Shantonav --currency EUR
+createAccount --accountHolderName Gijs --currency EUR
+createAGroupAccount --groupName OurLilGroup --currency EUR
+addAccountToGroup --accountHolderName Gijs --groupName OurLilGroup
+lookupAllAccounts
+depositToAccount --amount 100 --accountName Shantonav
+lookupAllAccounts
+transferFunds --amount 10 --fromAccountName Shantonav --toAccountName OurLilGroup
+transferFunds --amount 10 --fromAccountName  OurLilGroup --toAccountName Shantonav
+transferFunds --amount 10 --fromAccountName X --toAccountName Shantonav
+lookupAllAccounts
+depositToAccount --amount 100 --accountName Gijs
+lookupAllAccounts
+transferFunds --amount 10 --fromAccountName Gijs --toAccountName OurLilGroup
+lookupAllAccounts
+transferFunds --amount 10 --fromAccountName Gijs --toAccountName Shantonav
+lookupAllAccounts
+addAccountToGroup --accountHolderName Shantonav --groupName OurLilGroup
+transferFunds --amount 30 --fromAccountName Shantonav --toAccountName OurLilGroup
+lookupAllAccounts
+```
 
 
+## Would produce
+
+```shell
+Account balances:
+Account name: Shantonav, accountNumber: 1735503258075, balance: 80
+Account name: Gijs, accountNumber: 1735503258128, balance: 80
+Account name: OurLilGroup, accountNumber: 1735503258138, balance: 40
+```
 
 
-##things to do 
-
-1. Unique constraints : not working with in-mem H2, changed to im-mem cache for idempotency
-2. Batching 
-3. Integrate TB
-4. Display the ledger with a command
-5. Deposit : money goes to L1 (liquidity) -> transfer from L1 to A1 
-6. Withdraw : transfer from A2 to L1
-7. Transfer

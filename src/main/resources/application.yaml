@@ -20,4 +20,4 @@ dcrdemo:
   tigerbeetle:
     replica:
       cluster-id: 0
-      addresses: 3002
+      addresses: 3000

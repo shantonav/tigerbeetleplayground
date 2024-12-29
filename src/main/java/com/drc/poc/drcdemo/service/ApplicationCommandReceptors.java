@@ -1,10 +1,6 @@
 package com.drc.poc.drcdemo.service;
 
-import com.drc.poc.drcdemo.dtos.AccountBalance;
-import com.drc.poc.drcdemo.dtos.AccountOperationDto;
-import com.drc.poc.drcdemo.dtos.GroupDto;
-import com.drc.poc.drcdemo.dtos.GroupIndividualDto;
-import com.drc.poc.drcdemo.dtos.IndividualDto;
+import com.drc.poc.drcdemo.dtos.*;
 import com.drc.poc.drcdemo.entities.Currency;
 import com.drc.poc.drcdemo.tbstorage.service.LedgerStorageService;
 import com.drc.poc.drcdemo.tbstorage.service.model.BatchDepositRequest;
@@ -24,10 +20,11 @@ import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.drc.poc.drcdemo.tbstorage.config.DemoBankAccounts.DEFAULT_BANK_ACCOUNT_ID;
+import static com.drc.poc.drcdemo.tbstorage.config.LedgerSetup.DEFAULT_BANK_ACCOUNT_ID;
 
 @ShellComponent
 @Slf4j
@@ -92,8 +89,20 @@ public class ApplicationCommandReceptors {
             log.error("Account name {} and/or number {} does not exist. Deposit aborted ", accountHolderName, accountNumber);
             return "";
         };
+        Long targetAccountNumber ;
+        if (accountDetails.get().accountType().equals(AccountType.GROUP)){
+            targetAccountNumber =
+                    accountService.findGroup(accountHolderName, convertAccountNumber.apply(accountNumber))
+                            .orElseThrow(() -> new RuntimeException("Group not found"))
+                            .getAccountNumber();
+        } else {
+            targetAccountNumber =
+                    accountService.findIndividual(accountHolderName, convertAccountNumber.apply(accountNumber))
+                            .orElseThrow(() -> new RuntimeException("Individual not found"))
+                            .getAccountNumber();
+        }
 
-        DepositRequest depositRequest = new DepositRequest(Long.parseLong(accountNumber), BigInteger.valueOf(amount));
+        DepositRequest depositRequest = new DepositRequest(targetAccountNumber, BigInteger.valueOf(amount));
         BatchDepositRequest batchDepositRequest = new BatchDepositRequest(DEFAULT_BANK_ACCOUNT_ID, Collections.singletonList(depositRequest));
         TransferResult depositResult = ledgerStorageService.deposit(batchDepositRequest).get(0);
         if (depositResult.response() != 0) {
@@ -117,11 +126,24 @@ public class ApplicationCommandReceptors {
             return "";
         };
 
-        WithdrawRequest withdrawRequest = new WithdrawRequest(Long.parseLong(accountNumber), BigInteger.valueOf(amount));
+        Long targetAccountNumber ;
+        if (accountDetails.get().accountType().equals(AccountType.GROUP)){
+            targetAccountNumber =
+                    accountService.findGroup(accountHolderName, convertAccountNumber.apply(accountNumber))
+                            .orElseThrow(() -> new RuntimeException("Group not found"))
+                            .getAccountNumber();
+        } else {
+            targetAccountNumber =
+                    accountService.findIndividual(accountHolderName, convertAccountNumber.apply(accountNumber))
+                            .orElseThrow(() -> new RuntimeException("Individual not found"))
+                            .getAccountNumber();
+        }
+
+        WithdrawRequest withdrawRequest = new WithdrawRequest(targetAccountNumber, BigInteger.valueOf(amount));
         BatchWithdrawRequest batchWithdrawRequest = new BatchWithdrawRequest(DEFAULT_BANK_ACCOUNT_ID, Collections.singletonList(withdrawRequest));
         TransferResult withdrawResult = ledgerStorageService.withdraw(batchWithdrawRequest).get(0);
         if (withdrawResult.response() != 0) {
-            log.error("Deposit failed for {}-{} due to: {}", accountHolderName, accountNumber, withdrawResult.description());
+            log.error("Withdraw failed for {}-{} due to: {}", accountHolderName, accountNumber, withdrawResult.description());
             throw new RuntimeException("Deposit failed");
         }
 
@@ -157,12 +179,59 @@ public class ApplicationCommandReceptors {
             return "";
         };
 
-        TransferRequest transferRequest = new TransferRequest(Long.parseLong(fromAccountNumber), Long.parseLong(toAccountNumber), BigInteger.valueOf(amount));
+        final AtomicReference<AccountDto> toIndividualDtoRef = new AtomicReference<>();
+        final AtomicReference<AccountDto> fromIndividualDtoRef = new AtomicReference<>();
+
+        if ( fromAccountDetails.get().accountType().equals(AccountType.GROUP) && toAccountDetails.get().accountType().equals(AccountType.GROUP)) {
+            log.error("Cannot transfer between groups");
+            return "";
+        } else if ( fromAccountDetails.get().accountType().equals(AccountType.GROUP)) {
+            Optional<IndividualDto> toIndividualDto = accountService.findIndividual(toAccountName, convertAccountNumber.apply(toAccountNumber));
+            if (toIndividualDto.isEmpty()) {
+                log.error("To account name {} and/or number {} does not exist. Transfer aborted ", toAccountName, toAccountNumber);
+                return "";
+            }
+            if ( toIndividualDto.get().getGroups().stream().noneMatch(grp -> grp.getGroupName().equals(fromAccountName) ||
+                    grp.getAccountNumber().equals(convertAccountNumber.apply(toAccountNumber)))) {
+                log.error("To account name {} or number {} does not belong to group account name {} or number {}, transfer aborted",
+                        toAccountName, toAccountNumber, fromAccountName, fromAccountNumber);
+                return "";
+            }
+            fromIndividualDtoRef.set(accountService.findGroup(fromAccountName, convertAccountNumber.apply(fromAccountNumber))
+                    .orElseThrow(() -> new RuntimeException("Group could not be found, something is buggy in code")));
+            toIndividualDtoRef.set(toIndividualDto.orElseThrow(() -> new RuntimeException("Individual could not be found, something is wrong in code")));
+
+        }else if ( toAccountDetails.get().accountType().equals(AccountType.GROUP)) {
+            Optional<IndividualDto> fromIndividualDto = accountService.findIndividual(fromAccountName, convertAccountNumber.apply(fromAccountNumber));
+            if (fromIndividualDto.isEmpty()) {
+                log.error("From account name {} and/or number {} does not exist. Transfer aborted ", fromAccountName, fromAccountNumber);
+                return "";
+            }
+            if ( fromIndividualDto.get().getGroups().stream().noneMatch(grp -> grp.getGroupName().equals(toAccountName) ||
+                    grp.getAccountNumber().equals(convertAccountNumber.apply(toAccountNumber)))) {
+                log.error("From Account name {} or number {} does not belong to group account name {} or number {}, transfer aborted",
+                        fromAccountName, fromAccountNumber, toAccountName, toAccountNumber);
+                return "";
+            }
+
+            toIndividualDtoRef.set(accountService.findGroup(toAccountName, convertAccountNumber.apply(toAccountNumber))
+                    .orElseThrow(() -> new RuntimeException("Group could not be found, something is buggy in code")));
+            fromIndividualDtoRef.set(fromIndividualDto.orElseThrow(() -> new RuntimeException("Individual could not be found, something is wrong in code")));
+
+        }else{
+
+            fromIndividualDtoRef.set(accountService.findIndividual(fromAccountName, convertAccountNumber.apply(fromAccountNumber))
+                    .orElseThrow(() -> new RuntimeException("From account reference not found, something smelling in code.")));
+            toIndividualDtoRef.set(accountService.findIndividual(toAccountName, convertAccountNumber.apply(toAccountNumber))
+                    .orElseThrow(() -> new RuntimeException("To account reference not found, something smelling in code.")));
+        }
+
+        TransferRequest transferRequest = new TransferRequest(fromIndividualDtoRef.get().getAccountNumber(), toIndividualDtoRef.get().getAccountNumber(), BigInteger.valueOf(amount));
         TransferResult transfersResult = ledgerStorageService.createTransfers(Collections.singletonList(transferRequest)).get(0);
 
         if (transfersResult.response() != 0) {
             log.error("Transfer failed from {}-{} to  {}-{}, caused by: {}", fromAccountName, fromAccountNumber, toAccountName, toAccountNumber, transfersResult.description());
-            throw new RuntimeException("Deposit failed");
+            throw new RuntimeException("Transfer failed");
         }
 
         return String.format("Money %s is transferred from account name %s or number %s, " +

@@ -16,8 +16,14 @@ public class GroupDto extends AccountDto {
     @NotNull
     private  String groupName;
 
+    @Default
     public GroupDto(Currency currency, String groupName) {
         super(currency);
+        this.groupName = groupName;
+    }
+
+    public GroupDto(Currency currency, String groupName, Long accountNumber) {
+        super(currency, accountNumber);
         this.groupName = groupName;
     }
 }
