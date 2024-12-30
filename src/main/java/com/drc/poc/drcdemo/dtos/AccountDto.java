@@ -10,7 +10,6 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public abstract  class AccountDto {
     protected Long accountNumber;
-    protected Long balance;
     protected Currency currency;
 
     public AccountDto(Currency currency) {

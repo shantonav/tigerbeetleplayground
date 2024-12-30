@@ -24,9 +24,6 @@ public class Individual {
     @Column(name = "INDIVACCOUNTNUMBER", nullable = false)
     private Long indivAccountNumber;
 
-    @Column(name = "BALANCE")
-    private Long balance;
-
     @Column(name = "CURRENCY", nullable = false)
     private Currency currency;
 

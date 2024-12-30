@@ -25,9 +25,6 @@ public class Group {
     private Long groupAccountNumber;
 
 
-    @Column(name = "BALANCE")
-    private Long balance;
-
     @Column(name = "CURRENCY", nullable = false)
     private Currency currency;
 
