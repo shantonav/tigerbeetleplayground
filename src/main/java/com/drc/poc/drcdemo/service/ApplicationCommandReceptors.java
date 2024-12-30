@@ -24,8 +24,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.drc.poc.drcdemo.tbstorage.config.LedgerSetup.DEFAULT_BANK_ACCOUNT_ID;
-
 @ShellComponent
 @Slf4j
 @AllArgsConstructor
@@ -37,7 +35,7 @@ public class ApplicationCommandReceptors {
     @ShellMethod(key = "createAccount", value = "Create an individual account")
     public String createAccount(@ShellOption(value = "--accountHolderName") String accountHolderName, @ShellOption(value = "--currency") Currency currency) {
 
-        IndividualDto individualDto = accountService.createAnAccount(new IndividualDto(Currency.EUR, accountHolderName));
+        IndividualDto individualDto = accountService.createAnAccount(new IndividualDto(currency, accountHolderName));
 
         return "Created account number " + individualDto.getAccountNumber() + " for " + accountHolderName + " for Currency " + currency;
     }
@@ -48,7 +46,8 @@ public class ApplicationCommandReceptors {
         List<AccountBalance> balanceForAllAccounts = accountService.getBalanceForAllAccounts();
 
         String printOutResponse = balanceForAllAccounts.stream()
-                .map(accountBalance -> String.format("Account name: %s, accountNumber: %d, balance: %d", accountBalance.accountName(), accountBalance.accountId(), accountBalance.balance()))
+                .map(accountBalance -> String.format("Account name: %s, accountNumber: %d, balance: %d, in Currency:%s",
+                        accountBalance.accountName(), accountBalance.accountId(), accountBalance.balance(), accountBalance.currency()))
                 .collect(Collectors.joining("\n"));
 
         return "Account balances: \n" + printOutResponse;
@@ -57,7 +56,7 @@ public class ApplicationCommandReceptors {
     @ShellMethod(key = "createAGroupAccount", value = "Create a Group account")
     public String createAGroupAccount(@ShellOption(value = "--groupName") String groupName, @ShellOption(value = "--currency") Currency currency) {
 
-        GroupDto individualDto = accountService.createAGroupAccount(new GroupDto(Currency.EUR, groupName));
+        GroupDto individualDto = accountService.createAGroupAccount(new GroupDto(currency, groupName));
 
         return "Created group account number " + individualDto.getAccountNumber() + " for " + groupName + " for Currency " + currency;
     }
@@ -89,21 +88,20 @@ public class ApplicationCommandReceptors {
             log.error("Account name {} and/or number {} does not exist. Deposit aborted ", accountHolderName, accountNumber);
             return "";
         };
-        Long targetAccountNumber ;
+        AccountDto accountDto;
         if (accountDetails.get().accountType().equals(AccountType.GROUP)){
-            targetAccountNumber =
+            accountDto =
                     accountService.findGroup(accountHolderName, convertAccountNumber.apply(accountNumber))
-                            .orElseThrow(() -> new RuntimeException("Group not found"))
-                            .getAccountNumber();
+                            .orElseThrow(() -> new RuntimeException("Group not found"));
+
         } else {
-            targetAccountNumber =
+            accountDto =
                     accountService.findIndividual(accountHolderName, convertAccountNumber.apply(accountNumber))
-                            .orElseThrow(() -> new RuntimeException("Individual not found"))
-                            .getAccountNumber();
+                            .orElseThrow(() -> new RuntimeException("Individual not found"));
         }
 
-        DepositRequest depositRequest = new DepositRequest(targetAccountNumber, BigInteger.valueOf(amount));
-        BatchDepositRequest batchDepositRequest = new BatchDepositRequest(DEFAULT_BANK_ACCOUNT_ID, Collections.singletonList(depositRequest));
+        DepositRequest depositRequest = new DepositRequest(accountDto.getAccountNumber(), BigInteger.valueOf(amount));
+        BatchDepositRequest batchDepositRequest = new BatchDepositRequest((long)accountDto.getCurrency().getValue(), Collections.singletonList(depositRequest), accountDto.getCurrency());
         TransferResult depositResult = ledgerStorageService.deposit(batchDepositRequest).get(0);
         if (depositResult.response() != 0) {
             log.error("Deposit failed for {}-{} due to: {}", accountHolderName, accountNumber, depositResult.description());
@@ -126,21 +124,19 @@ public class ApplicationCommandReceptors {
             return "";
         };
 
-        Long targetAccountNumber ;
+        AccountDto accountDto;
         if (accountDetails.get().accountType().equals(AccountType.GROUP)){
-            targetAccountNumber =
+            accountDto =
                     accountService.findGroup(accountHolderName, convertAccountNumber.apply(accountNumber))
-                            .orElseThrow(() -> new RuntimeException("Group not found"))
-                            .getAccountNumber();
+                            .orElseThrow(() -> new RuntimeException("Group not found"));
         } else {
-            targetAccountNumber =
+            accountDto =
                     accountService.findIndividual(accountHolderName, convertAccountNumber.apply(accountNumber))
-                            .orElseThrow(() -> new RuntimeException("Individual not found"))
-                            .getAccountNumber();
+                            .orElseThrow(() -> new RuntimeException("Individual not found"));
         }
 
-        WithdrawRequest withdrawRequest = new WithdrawRequest(targetAccountNumber, BigInteger.valueOf(amount));
-        BatchWithdrawRequest batchWithdrawRequest = new BatchWithdrawRequest(DEFAULT_BANK_ACCOUNT_ID, Collections.singletonList(withdrawRequest));
+        WithdrawRequest withdrawRequest = new WithdrawRequest(accountDto.getAccountNumber(), BigInteger.valueOf(amount));
+        BatchWithdrawRequest batchWithdrawRequest = new BatchWithdrawRequest((long) accountDto.getCurrency().getValue(), Collections.singletonList(withdrawRequest), accountDto.getCurrency());
         TransferResult withdrawResult = ledgerStorageService.withdraw(batchWithdrawRequest).get(0);
         if (withdrawResult.response() != 0) {
             log.error("Withdraw failed for {}-{} due to: {}", accountHolderName, accountNumber, withdrawResult.description());
@@ -226,7 +222,7 @@ public class ApplicationCommandReceptors {
                     .orElseThrow(() -> new RuntimeException("To account reference not found, something smelling in code.")));
         }
 
-        TransferRequest transferRequest = new TransferRequest(fromIndividualDtoRef.get().getAccountNumber(), toIndividualDtoRef.get().getAccountNumber(), BigInteger.valueOf(amount));
+        TransferRequest transferRequest = new TransferRequest(fromIndividualDtoRef.get().getAccountNumber(), toIndividualDtoRef.get().getAccountNumber(), BigInteger.valueOf(amount), null);
         TransferResult transfersResult = ledgerStorageService.createTransfers(Collections.singletonList(transferRequest)).get(0);
 
         if (transfersResult.response() != 0) {

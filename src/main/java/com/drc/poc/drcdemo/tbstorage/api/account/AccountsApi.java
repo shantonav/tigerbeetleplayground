@@ -1,6 +1,7 @@
 package com.drc.poc.drcdemo.tbstorage.api.account;
 
 
+import com.drc.poc.drcdemo.tbstorage.service.AccountToCreate;
 import com.drc.poc.drcdemo.tbstorage.service.LedgerStorageService;
 import com.drc.poc.drcdemo.tbstorage.service.model.AccountCreated;
 import com.drc.poc.drcdemo.tbstorage.service.model.AccountOverview;
@@ -23,12 +24,12 @@ public class AccountsApi {
     }
 
     @PostMapping("/bank/create")
-    List<AccountCreated> createBankAccounts(@RequestBody List<Long> accountIds) {
+    List<AccountCreated> createBankAccounts(@RequestBody List<AccountToCreate> accountIds) {
         return ledgerStorageService.createBankAccounts(accountIds);
     }
 
     @PostMapping
-    List<AccountCreated> createAccountResults(@RequestBody List<Long> accountIds) {
+    List<AccountCreated> createAccountResults(@RequestBody List<AccountToCreate> accountIds) {
         return ledgerStorageService.createAccounts(accountIds);
     }
 

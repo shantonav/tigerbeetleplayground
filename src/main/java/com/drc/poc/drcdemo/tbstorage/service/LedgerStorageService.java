@@ -21,6 +21,7 @@ import com.tigerbeetle.TransferBatch;
 import com.tigerbeetle.UInt128;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -44,31 +45,32 @@ public class LedgerStorageService {
         this.tigerBeetleClient = tigerBeetleClient;
     }
 
-    public List<AccountCreated> createBankAccounts(List<Long> accountIds) {
-        return createAccounts(accountIds, AccountFlags.NONE);
+    public List<AccountCreated> createBankAccounts(List<AccountToCreate> accounts) {
+        return createAccounts(accounts, AccountFlags.NONE);
     }
 
-    public List<AccountCreated> createAccounts(List<Long> accountIds) {
-        return createAccounts(accountIds, AccountFlags.DEBITS_MUST_NOT_EXCEED_CREDITS);
+    public List<AccountCreated> createAccounts(List<AccountToCreate> accounts) {
+        return createAccounts(accounts, AccountFlags.DEBITS_MUST_NOT_EXCEED_CREDITS);
     }
 
-    private List<AccountCreated> createAccounts(List<Long> accountIds, int flags) {
-        if (accountIds.isEmpty()) {
+    private List<AccountCreated> createAccounts(List<AccountToCreate> accounts, int flags) {
+        if (ObjectUtils.isEmpty(accounts)) {
             return emptyList();
         }
 
         var result = new ArrayList<AccountCreated>();
 
-        var accountBatch = new AccountBatch(accountIds.size());
+        var accountBatch = new AccountBatch(accounts.size());
         var indexedCreateAccountResult = new HashMap<Integer, MutablePair<Long, CreateAccountResult>>();
-        IntStream.range(0, accountIds.size()).forEach(index -> {
-            long accountId = accountIds.get(index);
+        IntStream.range(0, accounts.size()).forEach(index -> {
+            AccountToCreate account = accounts.get(index);
+            long accountId = account.id();
             MutablePair<Long, CreateAccountResult> longCreateAccountResultHashMap = new MutablePair<>(accountId, CreateAccountResult.Ok);
             indexedCreateAccountResult.put(index, longCreateAccountResultHashMap);
 
             accountBatch.add();
             accountBatch.setId(UInt128.asBytes(accountId));
-            accountBatch.setLedger(1);
+            accountBatch.setLedger(account.ledgerId());
             accountBatch.setCode(1);
             accountBatch.setFlags(flags);
         });
@@ -151,7 +153,45 @@ public class LedgerStorageService {
 
             transferBatch.add();
             transferBatch.setId(UInt128.asBytes(transferId));
-            transferBatch.setLedger(1);
+            transferBatch.setLedger(transferRequest.currency().getValue());
+            transferBatch.setCode(1);
+            transferBatch.setDebitAccountId(UInt128.asBytes(transferRequest.debitId()));
+            transferBatch.setCreditAccountId(UInt128.asBytes(transferRequest.creditId()));
+            transferBatch.setAmount(transferRequest.amountInCents());
+            transferBatch.setFlags(TransferType.POST_DIRECT.getValue());
+
+            transferResultArray.put(index, new MutablePair<>(transferId, CreateTransferResult.Ok));
+        });
+
+        CreateTransferResultBatch transferResults = tigerBeetleClient.createTransfers(transferBatch);
+
+        while (transferResults.next()) {
+            MutablePair<UUID, CreateTransferResult> result = transferResultArray.get(transferResults.getIndex());
+            if (result != null) {
+                result.setRight(transferResults.getResult());
+            }
+        }
+
+        return transferResultArray.values().stream()
+                .map(pair -> new TransferResult(pair.getLeft(), pair.getRight().value, pair.getRight().name()))
+                .collect(Collectors.toList());
+    }
+
+    public List<TransferResult> createLinkedTransfers(List<TransferRequest> transferRequests)  {
+        if(transferRequests.isEmpty()) {
+            return emptyList();
+        }
+
+        TransferBatch transferBatch = new TransferBatch(transferRequests.size());
+        Map<Integer, MutablePair<UUID, CreateTransferResult>> transferResultArray = new HashMap<>();
+
+        IntStream.range(0, transferRequests.size()).forEach(index -> {
+            TransferRequest transferRequest = transferRequests.get(index);
+            UUID transferId = UUID.randomUUID();
+
+            transferBatch.add();
+            transferBatch.setId(UInt128.asBytes(transferId));
+            transferBatch.setLedger(transferRequest.currency().getValue());
             transferBatch.setCode(1);
             transferBatch.setDebitAccountId(UInt128.asBytes(transferRequest.debitId()));
             transferBatch.setCreditAccountId(UInt128.asBytes(transferRequest.creditId()));
@@ -181,7 +221,7 @@ public class LedgerStorageService {
                 .depositRequests()
                 .stream()
                 .map(depositRequest -> new TransferRequest(
-                        debitBankLedgerAccountId, depositRequest.creditId(), depositRequest.amountInCents())).toList();
+                        debitBankLedgerAccountId, depositRequest.creditId(), depositRequest.amountInCents(), batchDepositRequest.currency())).toList();
 
         return createTransfers(depositTransferRequests);
     }
@@ -192,7 +232,7 @@ public class LedgerStorageService {
                 .withdrawRequests()
                 .stream()
                 .map(withdrawRequest -> new TransferRequest(
-                        withdrawRequest.debitId(), creditAccountIt, withdrawRequest.amountInCents())).toList();
+                        withdrawRequest.debitId(), creditAccountIt, withdrawRequest.amountInCents(), batchWithdrawRequest.currency())).toList();
 
         return createTransfers(depositTransferRequests);
     }

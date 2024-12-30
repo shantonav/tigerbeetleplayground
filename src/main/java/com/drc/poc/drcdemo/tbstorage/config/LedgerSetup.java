@@ -1,5 +1,7 @@
 package com.drc.poc.drcdemo.tbstorage.config;
 
+import com.drc.poc.drcdemo.entities.Currency;
+import com.drc.poc.drcdemo.tbstorage.service.AccountToCreate;
 import com.drc.poc.drcdemo.tbstorage.service.LedgerStorageService;
 import com.drc.poc.drcdemo.tbstorage.service.model.AccountCreated;
 import com.drc.poc.drcdemo.tbstorage.service.model.LookupAccountResult;
@@ -14,7 +16,8 @@ import java.util.List;
 @Slf4j
 @Component
 public class LedgerSetup implements ApplicationListener<ContextRefreshedEvent> {
-    public static Long DEFAULT_BANK_ACCOUNT_ID = 1L;
+    public static Long DEFAULT_EUR_BANK_ACCOUNT_ID = (long) Currency.EUR.getValue();
+    public static Long DEFAULT_DRC_BANK_ACCOUNT_ID = (long) Currency.DRC.getValue();;
     private final LedgerStorageService ledgerStorageService;
 
     public LedgerSetup(LedgerStorageService ledgerStorageService) {
@@ -23,17 +26,10 @@ public class LedgerSetup implements ApplicationListener<ContextRefreshedEvent> {
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
-        List<LookupAccountResult> lookupAccountResults = ledgerStorageService.lookupAccounts(Collections.singletonList(DEFAULT_BANK_ACCOUNT_ID));
-        if (lookupAccountResults.isEmpty()) {
-
-            List<AccountCreated> bankAccounts = ledgerStorageService.createBankAccounts(Collections.singletonList(DEFAULT_BANK_ACCOUNT_ID));
-
-            if(bankAccounts.isEmpty()) {
-                log.error("Bank accounts not created");
-                throw new RuntimeException("Bank accounts not created");
-            }
-        }
-
+        ledgerStorageService.createBankAccounts(List.of(
+                new AccountToCreate(DEFAULT_EUR_BANK_ACCOUNT_ID, Currency.EUR.getValue()),
+                new AccountToCreate(DEFAULT_DRC_BANK_ACCOUNT_ID, Currency.DRC.getValue()))
+        );
 
     }
 }

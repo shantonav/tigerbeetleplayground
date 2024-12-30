@@ -8,12 +8,14 @@ import com.drc.poc.drcdemo.dtos.GroupIndividualDto;
 import com.drc.poc.drcdemo.dtos.IndividualDto;
 import com.drc.poc.drcdemo.dtos.TransferDto;
 import com.drc.poc.drcdemo.dtos.TransferResult;
+import com.drc.poc.drcdemo.entities.Currency;
 import com.drc.poc.drcdemo.entities.Group;
 import com.drc.poc.drcdemo.entities.GroupIndividual;
 import com.drc.poc.drcdemo.entities.Individual;
 import com.drc.poc.drcdemo.repository.GroupAccountRepo;
 import com.drc.poc.drcdemo.repository.GroupIndividualRepo;
 import com.drc.poc.drcdemo.repository.IndividualAccountRepo;
+import com.drc.poc.drcdemo.tbstorage.service.AccountToCreate;
 import com.drc.poc.drcdemo.tbstorage.service.LedgerStorageService;
 import com.drc.poc.drcdemo.tbstorage.service.model.AccountCreated;
 import com.drc.poc.drcdemo.tbstorage.service.model.LookupAccountResult;
@@ -68,7 +70,7 @@ public class AccountService implements AccountServiceInterface{
             throw new RuntimeException(e.getMessage());
         }
 
-        boolean createAccountInLedgerSuccess = addAccountToStorage(indiv.getIndivAccountNumber());
+        boolean createAccountInLedgerSuccess = addAccountToStorage(indiv.getIndivAccountNumber(), individualDto.getCurrency().getValue());
         if (!createAccountInLedgerSuccess) {
             handleLedgerServiceError(indiv.getIndivAccountNumber());
         }
@@ -76,8 +78,8 @@ public class AccountService implements AccountServiceInterface{
         return (IndividualDto) individualDto.setAccountNumber(indiv.getIndivAccountNumber());
     }
 
-    private boolean addAccountToStorage(Long accountNumber) {
-        List<AccountCreated> accounts = ledgerStorageService.createAccounts(Collections.singletonList(accountNumber));
+    private boolean addAccountToStorage(Long accountNumber, Integer ledgerId) {
+        List<AccountCreated> accounts = ledgerStorageService.createAccounts(Collections.singletonList(new AccountToCreate(accountNumber, ledgerId)));
         return accounts.stream()
                 .anyMatch(accountCreated ->
                         Objects.equals(accountCreated.accountNumber(), accountNumber) && accountCreated.statusCode() == 0);
@@ -107,7 +109,7 @@ public class AccountService implements AccountServiceInterface{
             throw new RuntimeException(e.getMessage());
         }
 
-        boolean createAccountInLedgerSuccess = addAccountToStorage(group.getGroupAccountNumber());
+        boolean createAccountInLedgerSuccess = addAccountToStorage(group.getGroupAccountNumber(), groupDto.getCurrency().getValue());
         if (!createAccountInLedgerSuccess) {
             handleLedgerServiceError(group.getGroupAccountNumber());
         }
@@ -189,7 +191,7 @@ public class AccountService implements AccountServiceInterface{
                 .stream()
                 .map(lookupAccountResult -> {
                     String accountName = accountIdNameMap.get(lookupAccountResult.accountId());
-                    return new AccountBalance(accountName, lookupAccountResult.accountId(), lookupAccountResult.currentBalance());
+                    return new AccountBalance(accountName, lookupAccountResult.accountId(), lookupAccountResult.currentBalance(), Currency.getCurrencyByValue(lookupAccountResult.ledger()));
                 }).toList();
     }
 
