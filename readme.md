@@ -91,4 +91,16 @@ Account name: Gijs, accountNumber: 1735503258128, balance: 80
 Account name: OurLilGroup, accountNumber: 1735503258138, balance: 40
 ```
 
+## Or you can run the commands as a script
 
+```shell
+script <path-to-scirpt-file>
+```
+
+## How to run the app 
+
+This Spring boot app produces an executable jar
+```shell
+java -jar drcdemo-0.0.1-SNAPSHOT-exec.jar
+```
+Then the `shell:>` would open and there you can run the script as shown above.
