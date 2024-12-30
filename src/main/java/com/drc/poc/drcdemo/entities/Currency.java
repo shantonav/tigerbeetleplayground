@@ -6,17 +6,17 @@ import java.util.Arrays;
 
 @Getter
 public enum Currency {
-    EUR(1, 1.0d),
-    USD(3, 0.94d),
-    DRC(2, 10.0d);
-    private final int value;
-    private final double rate;
-    Currency(int value, double conversionRate) {
+    EUR(1, 1L),
+    USD(3, 1L),
+    DRC(2, 10L);
+    private final long value;
+    private final long rate;
+    Currency(long value, long conversionRate) {
         this.value = value;
         this.rate = conversionRate;
     }
 
-    public static Currency getCurrencyByValue(int value) {
+    public static Currency getCurrencyByValue(long value) {
         return Arrays.stream(values())
                 .filter(currency -> currency.value == value)
                 .findFirst()

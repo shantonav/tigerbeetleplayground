@@ -70,7 +70,7 @@ public class AccountService implements AccountServiceInterface{
             throw new RuntimeException(e.getMessage());
         }
 
-        boolean createAccountInLedgerSuccess = addAccountToStorage(indiv.getIndivAccountNumber(), individualDto.getCurrency().getValue());
+        boolean createAccountInLedgerSuccess = addAccountToStorage(indiv.getIndivAccountNumber(), (int)individualDto.getCurrency().getValue());
         if (!createAccountInLedgerSuccess) {
             handleLedgerServiceError(indiv.getIndivAccountNumber());
         }
@@ -109,7 +109,7 @@ public class AccountService implements AccountServiceInterface{
             throw new RuntimeException(e.getMessage());
         }
 
-        boolean createAccountInLedgerSuccess = addAccountToStorage(group.getGroupAccountNumber(), groupDto.getCurrency().getValue());
+        boolean createAccountInLedgerSuccess = addAccountToStorage(group.getGroupAccountNumber(), (int) groupDto.getCurrency().getValue());
         if (!createAccountInLedgerSuccess) {
             handleLedgerServiceError(group.getGroupAccountNumber());
         }

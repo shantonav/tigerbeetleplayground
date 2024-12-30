@@ -26,11 +26,7 @@ import org.springframework.util.ObjectUtils;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -153,50 +149,12 @@ public class LedgerStorageService {
 
             transferBatch.add();
             transferBatch.setId(UInt128.asBytes(transferId));
-            transferBatch.setLedger(transferRequest.currency().getValue());
+            transferBatch.setLedger((int)transferRequest.currency().getValue());
             transferBatch.setCode(1);
             transferBatch.setDebitAccountId(UInt128.asBytes(transferRequest.debitId()));
             transferBatch.setCreditAccountId(UInt128.asBytes(transferRequest.creditId()));
             transferBatch.setAmount(transferRequest.amountInCents());
-            transferBatch.setFlags(TransferType.POST_DIRECT.getValue());
-
-            transferResultArray.put(index, new MutablePair<>(transferId, CreateTransferResult.Ok));
-        });
-
-        CreateTransferResultBatch transferResults = tigerBeetleClient.createTransfers(transferBatch);
-
-        while (transferResults.next()) {
-            MutablePair<UUID, CreateTransferResult> result = transferResultArray.get(transferResults.getIndex());
-            if (result != null) {
-                result.setRight(transferResults.getResult());
-            }
-        }
-
-        return transferResultArray.values().stream()
-                .map(pair -> new TransferResult(pair.getLeft(), pair.getRight().value, pair.getRight().name()))
-                .collect(Collectors.toList());
-    }
-
-    public List<TransferResult> createLinkedTransfers(List<TransferRequest> transferRequests)  {
-        if(transferRequests.isEmpty()) {
-            return emptyList();
-        }
-
-        TransferBatch transferBatch = new TransferBatch(transferRequests.size());
-        Map<Integer, MutablePair<UUID, CreateTransferResult>> transferResultArray = new HashMap<>();
-
-        IntStream.range(0, transferRequests.size()).forEach(index -> {
-            TransferRequest transferRequest = transferRequests.get(index);
-            UUID transferId = UUID.randomUUID();
-
-            transferBatch.add();
-            transferBatch.setId(UInt128.asBytes(transferId));
-            transferBatch.setLedger(transferRequest.currency().getValue());
-            transferBatch.setCode(1);
-            transferBatch.setDebitAccountId(UInt128.asBytes(transferRequest.debitId()));
-            transferBatch.setCreditAccountId(UInt128.asBytes(transferRequest.creditId()));
-            transferBatch.setAmount(transferRequest.amountInCents());
-            transferBatch.setFlags(TransferType.POST_DIRECT.getValue());
+            transferBatch.setFlags(ObjectUtils.isEmpty(transferRequest.flags()) ? TransferType.POST_DIRECT.getValue() : transferRequest.flags());
 
             transferResultArray.put(index, new MutablePair<>(transferId, CreateTransferResult.Ok));
         });
@@ -221,7 +179,7 @@ public class LedgerStorageService {
                 .depositRequests()
                 .stream()
                 .map(depositRequest -> new TransferRequest(
-                        debitBankLedgerAccountId, depositRequest.creditId(), depositRequest.amountInCents(), batchDepositRequest.currency())).toList();
+                        debitBankLedgerAccountId, depositRequest.creditId(), depositRequest.amountInCents(), batchDepositRequest.currency(), null)).toList();
 
         return createTransfers(depositTransferRequests);
     }
@@ -232,7 +190,7 @@ public class LedgerStorageService {
                 .withdrawRequests()
                 .stream()
                 .map(withdrawRequest -> new TransferRequest(
-                        withdrawRequest.debitId(), creditAccountIt, withdrawRequest.amountInCents(), batchWithdrawRequest.currency())).toList();
+                        withdrawRequest.debitId(), creditAccountIt, withdrawRequest.amountInCents(), batchWithdrawRequest.currency(), null)).toList();
 
         return createTransfers(depositTransferRequests);
     }

@@ -9,6 +9,7 @@ import com.drc.poc.drcdemo.tbstorage.service.model.DepositRequest;
 import com.drc.poc.drcdemo.tbstorage.service.model.TransferRequest;
 import com.drc.poc.drcdemo.tbstorage.service.model.TransferResult;
 import com.drc.poc.drcdemo.tbstorage.service.model.WithdrawRequest;
+import com.tigerbeetle.TransferFlags;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.shell.standard.ShellComponent;
@@ -136,7 +137,7 @@ public class ApplicationCommandReceptors {
         }
 
         WithdrawRequest withdrawRequest = new WithdrawRequest(accountDto.getAccountNumber(), BigInteger.valueOf(amount));
-        BatchWithdrawRequest batchWithdrawRequest = new BatchWithdrawRequest((long) accountDto.getCurrency().getValue(), Collections.singletonList(withdrawRequest), accountDto.getCurrency());
+        BatchWithdrawRequest batchWithdrawRequest = new BatchWithdrawRequest( accountDto.getCurrency().getValue(), Collections.singletonList(withdrawRequest), accountDto.getCurrency());
         TransferResult withdrawResult = ledgerStorageService.withdraw(batchWithdrawRequest).get(0);
         if (withdrawResult.response() != 0) {
             log.error("Withdraw failed for {}-{} due to: {}", accountHolderName, accountNumber, withdrawResult.description());
@@ -222,7 +223,27 @@ public class ApplicationCommandReceptors {
                     .orElseThrow(() -> new RuntimeException("To account reference not found, something smelling in code.")));
         }
 
-        TransferRequest transferRequest = new TransferRequest(fromIndividualDtoRef.get().getAccountNumber(), toIndividualDtoRef.get().getAccountNumber(), BigInteger.valueOf(amount), null);
+        if ( !fromIndividualDtoRef.get().getCurrency().equals(toIndividualDtoRef.get().getCurrency()) ){
+
+            BigInteger targetAmount = BigInteger.valueOf(amount * toIndividualDtoRef.get().getCurrency().getRate());
+            List<TransferRequest> transferRequests = List.of(
+            new TransferRequest(
+                    fromIndividualDtoRef.get().getAccountNumber(), fromIndividualDtoRef.get().getCurrency().getValue(), BigInteger.valueOf(amount), fromIndividualDtoRef.get().getCurrency(), TransferFlags.LINKED),
+            new TransferRequest(
+                   toIndividualDtoRef.get().getCurrency().getValue(), toIndividualDtoRef.get().getAccountNumber(), targetAmount, toIndividualDtoRef.get().getCurrency(), null)
+                );
+
+            TransferResult transfersResult = ledgerStorageService.createTransfers(transferRequests).get(0);
+            if (transfersResult.response() != 0) {
+                log.error("Transfer failed from {}-{} to  {}-{}, caused by: {}", fromAccountName, fromAccountNumber, toAccountName, toAccountNumber, transfersResult.description());
+                throw new RuntimeException("Transfer failed");
+            }
+
+            return String.format("Source money %s to target money %s is transferred from account name %s or number %s, " +
+                    "to account name %s or number %s", amount, targetAmount, fromAccountName, fromAccountNumber, toAccountName, toAccountNumber);
+        }
+
+        TransferRequest transferRequest = new TransferRequest(fromIndividualDtoRef.get().getAccountNumber(), toIndividualDtoRef.get().getAccountNumber(), BigInteger.valueOf(amount), fromIndividualDtoRef.getOpaque().getCurrency(), null);
         TransferResult transfersResult = ledgerStorageService.createTransfers(Collections.singletonList(transferRequest)).get(0);
 
         if (transfersResult.response() != 0) {

@@ -8,5 +8,5 @@ public record TransferRequest(
         Long debitId,
         Long creditId,
         BigInteger amountInCents,
-        Currency currency) {
+        Currency currency, Integer flags) {
 }

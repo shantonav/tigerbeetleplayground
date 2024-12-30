@@ -27,8 +27,8 @@ public class LedgerSetup implements ApplicationListener<ContextRefreshedEvent> {
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
         ledgerStorageService.createBankAccounts(List.of(
-                new AccountToCreate(DEFAULT_EUR_BANK_ACCOUNT_ID, Currency.EUR.getValue()),
-                new AccountToCreate(DEFAULT_DRC_BANK_ACCOUNT_ID, Currency.DRC.getValue()))
+                new AccountToCreate(DEFAULT_EUR_BANK_ACCOUNT_ID, (int) Currency.EUR.getValue()),
+                new AccountToCreate(DEFAULT_DRC_BANK_ACCOUNT_ID, (int) Currency.DRC.getValue()))
         );
 
     }
