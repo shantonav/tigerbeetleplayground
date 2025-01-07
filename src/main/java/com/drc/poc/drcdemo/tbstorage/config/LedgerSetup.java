@@ -16,8 +16,8 @@ import java.util.List;
 @Slf4j
 @Component
 public class LedgerSetup implements ApplicationListener<ContextRefreshedEvent> {
-    public static Long DEFAULT_EUR_BANK_ACCOUNT_ID = (long) Currency.EUR.getValue();
-    public static Long DEFAULT_DRC_BANK_ACCOUNT_ID = (long) Currency.DRC.getValue();;
+    public static Long DEFAULT_EUR_BANK_ACCOUNT_ID = Currency.EUR.getValue();
+    public static Long DEFAULT_DRC_BANK_ACCOUNT_ID = Currency.DRC.getValue();;
     private final LedgerStorageService ledgerStorageService;
 
     public LedgerSetup(LedgerStorageService ledgerStorageService) {

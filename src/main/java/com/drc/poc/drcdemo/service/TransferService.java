@@ -82,7 +82,7 @@ public class TransferService implements TransferServiceInterface{
                     new TransferRequest(
                             toIndividualDtoRef.get().getCurrency().getValue(), toIndividualDtoRef.get().getAccountNumber(), targetAmount, toIndividualDtoRef.get().getCurrency(), null)
             );
-            log.info("Source money {} to target money {} is transferred from account name {} or number {}, " +
+            log.info("\n Source money {} to target money {} is transferred from account name {} or number {}, " +
                     "to account name {} or number {}", amount, targetAmount, fromAccountName, fromAccountNumber, toAccountName, toAccountNumber);
             return ledgerStorageService.createTransfers(transferRequests).get(0);
 
@@ -90,7 +90,7 @@ public class TransferService implements TransferServiceInterface{
 
         TransferRequest transferRequest = new TransferRequest(fromIndividualDtoRef.get().getAccountNumber(), toIndividualDtoRef.get().getAccountNumber(), BigInteger.valueOf(amount), fromIndividualDtoRef.getOpaque().getCurrency(), null);
 
-        log.info("Money {} is transferred from account name {} or number {}, " +
+        log.info("\n Money {} is transferred from account name {} or number {}, " +
                 "to account name {} or number {}", amount, fromAccountName, fromAccountNumber, toAccountName, toAccountNumber);
         return ledgerStorageService.createTransfers(Collections.singletonList(transferRequest)).get(0);
 

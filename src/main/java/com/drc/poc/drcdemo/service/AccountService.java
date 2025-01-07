@@ -15,6 +15,7 @@ import com.drc.poc.drcdemo.entities.Individual;
 import com.drc.poc.drcdemo.repository.GroupAccountRepo;
 import com.drc.poc.drcdemo.repository.GroupIndividualRepo;
 import com.drc.poc.drcdemo.repository.IndividualAccountRepo;
+import com.drc.poc.drcdemo.tbstorage.config.LedgerSetup;
 import com.drc.poc.drcdemo.tbstorage.service.AccountToCreate;
 import com.drc.poc.drcdemo.tbstorage.service.LedgerStorageService;
 import com.drc.poc.drcdemo.tbstorage.service.model.AccountCreated;
@@ -182,10 +183,16 @@ public class AccountService implements AccountServiceInterface{
                     return group.getGroupAccountNumber();
                 })
                 .toList();
+        accountIdNameMap.put(LedgerSetup.DEFAULT_EUR_BANK_ACCOUNT_ID, "Euro Liquidity account");
+        accountIdNameMap.put(LedgerSetup.DEFAULT_DRC_BANK_ACCOUNT_ID, "Drc Liquidity account");
 
         List<Long> allAccountIds = Stream.concat(individualAccountIds.stream(), groupAccountIds.stream()).toList();
+        List<Long> allAccountsIncludingLiquidityAccounts  = new java.util.ArrayList<>(
+                List.of(LedgerSetup.DEFAULT_EUR_BANK_ACCOUNT_ID, LedgerSetup.DEFAULT_DRC_BANK_ACCOUNT_ID)
+        );
+        allAccountsIncludingLiquidityAccounts.addAll(allAccountIds);
 
-        List<LookupAccountResult> lookupAccountResults = ledgerStorageService.lookupAccounts(allAccountIds);
+        List<LookupAccountResult> lookupAccountResults = ledgerStorageService.lookupAccounts(allAccountsIncludingLiquidityAccounts);
 
         return lookupAccountResults
                 .stream()
