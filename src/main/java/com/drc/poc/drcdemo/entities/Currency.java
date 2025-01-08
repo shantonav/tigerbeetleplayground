@@ -8,7 +8,7 @@ import java.util.Arrays;
 public enum Currency {
     EUR(1, 1L),
     USD(3, 1L),
-    DRC(2, 10L);
+    CDF(2, 10L);
     private final long value;
     private final long rate;
     Currency(long value, long conversionRate) {
